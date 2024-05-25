@@ -30,7 +30,7 @@ char *tests[] = {
     "sleep",
     "clone",
 };
-int num = 
+int num = 20;
 
 int
 main(void)
@@ -73,4 +73,5 @@ main(void)
       }
     }
   }
+  return 0;
 }
