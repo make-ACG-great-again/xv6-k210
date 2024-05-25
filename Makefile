@@ -153,7 +153,7 @@ else
 endif
 
 all: build
-    cp $T/kernel kernel-qemu
+	@cp $T/kernel kernel-qemu
 
 $U/initcode: $U/initcode.S
 	$(CC) $(CFLAGS) -march=rv64g -nostdinc -I. -Ikernel -c $U/initcode.S -o $U/initcode.o
