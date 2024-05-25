@@ -8,6 +8,30 @@
 
 char *argv[] = { "sh", 0 };
 
+char *tests[] = {
+    "brk",
+    "chdir",
+    "close",
+    "dup",
+    "exit",
+    "fork",
+    "fstat",
+    "getcwd",
+    "getpid",
+    "gettimeofday",
+    "mkdir_",
+    "openat",
+    "open",
+    "pipe",
+    "read",
+    "uname",
+    "wait",
+    "write",
+    "sleep",
+    "clone",
+};
+int num = 
+
 int
 main(void)
 {
@@ -21,7 +45,7 @@ main(void)
   dup(0);  // stdout
   dup(0);  // stderr
 
-  for(;;){
+  for(int i = 0; i < num; i++){
     printf("init: starting sh\n");
     pid = fork();
     if(pid < 0){
