@@ -137,7 +137,7 @@ QEMUOPTS += -smp $(CPUS)
 QEMUOPTS += -bios $(RUSTSBI)
 
 # import virtual disk image
-QEMUOPTS += -drive file=fs.img,if=none,format=raw,id=x0 
+QEMUOPTS += -drive file=sdcard.img,if=none,format=raw,id=x0 
 QEMUOPTS += -device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0
 
 run: build
@@ -242,6 +242,34 @@ sdcard: userprogs
 	@sudo cp $U/_init $(dst)/init
 	@sudo cp $U/_sh $(dst)/sh
 	@sudo cp README $(dst)/README
+
+sdcard.img:
+	@dd if=/dev/zero of=$@ bs=1M count=128
+	@mkfs.vfat -F 32 $@
+	@mount -t vfat $@ $(MNT_DIR)
+	@cp -r $(FSIMG)/* $(MNT_DIR)/
+	@sync $(MNT_DIR) && umount -v $(MNT_DIR)
+
+sd: $(UPROGS)
+#如果sdcard.img不存在，就创建，执⾏make clean后会删除这个文件
+	@if [ ! -f "sdcard.img" ]; then \
+		echo "making fs image..."; \
+		dd if=/dev/zero of=sdcard.img bs=1M count=128; \
+		mkfs.vfat -F 32 sdcard.img; fi
+#将sdcard.img挂载到/mnt⽬录，⽅便将测试⽤例copy到sdcard.img中
+	@mount sdcard.img $(dst)
+	@if [ ! -d "$(dst)/bin" ]; then mkdir $(dst)/bin; fi
+#将⽤户程序copy到sdcard.img中，注意，这⾥的⽤户程序不是测试⽤例，是ls/echo等
+	@for file in $$( ls $U/_* ); do \
+		cp $$file $(dst)/bin/$${file#$U/_}; done
+#将测试⽤例通过tests⽬录存放好，copy到sdcard.img中
+	@cp -R tests/* $(dst)
+	@umount $(dst)
+
+local:
+	@make build platform=qemu
+	@make sd
+	@$(QEMU) $(QEMUOPTS)
 
 clean: 
 	rm -f *.tex *.dvi *.idx *.aux *.log *.ind *.ilg \

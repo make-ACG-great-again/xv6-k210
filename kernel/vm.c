@@ -31,6 +31,12 @@ kvminit()
   kvmmap(UART_V, UART, PGSIZE, PTE_R | PTE_W);
   
   #ifdef QEMU
+  // shutdown
+  // // 在 kvminit() 函数中添加如下代码 --- failed [panic: kerneltrap]
+  // uint64 qemu_shutdown_addr = 0x100000;  // 选择的虚拟地址
+  // uint64 qemu_shutdown_phys = 0x100000;  // 物理地址，QEMU关机地址
+  // uint64 page_size = 0x1000;               // 页面大小，通常是 4KiB
+  // kvmmap(qemu_shutdown_addr, qemu_shutdown_phys, page_size, PTE_R | PTE_W);
   // virtio mmio disk interface
   kvmmap(VIRTIO0_V, VIRTIO0, PGSIZE, PTE_R | PTE_W);
   #endif
@@ -68,6 +74,8 @@ kvminit()
 
   // SYSCTL
   kvmmap(SYSCTL_V, SYSCTL, 0x1000, PTE_R | PTE_W);
+
+
   
   #endif
   

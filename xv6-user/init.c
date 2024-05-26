@@ -4,33 +4,18 @@
 #include "kernel/include/stat.h"
 #include "kernel/include/file.h"
 #include "kernel/include/fcntl.h"
+#include "kernel/include/sysnum.h"
 #include "xv6-user/user.h"
 
 char *argv[] = { "sh", 0 };
 
 char *tests[] = {
-    "brk",
-    "chdir",
-    "close",
-    "dup",
-    "exit",
-    "fork",
-    "fstat",
-    "getcwd",
-    "getpid",
-    "gettimeofday",
-    "mkdir_",
-    "openat",
-    "open",
-    "pipe",
-    "read",
-    "uname",
-    "wait",
-    "write",
-    "sleep",
-    "clone",
+   "brk", "close", "execve", "fstat", "getpid", "mkdir_", "mount", "openat", "uname", "waitpid",
+"chdir", "dup", "exit", "getcwd", "getppid", "mmap", "munmap", "pipe", "sleep", "times",
+"unlink", "write", "clone", "dup2", "fork", "getdents", "gettimeofday", "open", "read", "umount",
+"wait", "yield"
 };
-int num = 20;
+int num = sizeof(tests) / sizeof((tests)[0]);
 
 int
 main(void)
@@ -44,17 +29,16 @@ main(void)
   dev(O_RDWR, CONSOLE, 0);
   dup(0);  // stdout
   dup(0);  // stderr
-
   for(int i = 0; i < num; i++){
-    printf("init: starting sh\n");
+    //printf("init: starting %d\n", i);
     pid = fork();
     if(pid < 0){
       printf("init: fork failed\n");
       exit(1);
     }
     if(pid == 0){
-      exec("sh", argv);
-      printf("init: exec sh failed\n");
+      exec(tests[i], argv);
+      printf("init: exec %s failed\n", tests[i]);
       exit(1);
     }
 
@@ -73,5 +57,5 @@ main(void)
       }
     }
   }
-  return 0;
+  exit(0);
 }
