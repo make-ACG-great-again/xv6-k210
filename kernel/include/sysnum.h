@@ -30,6 +30,9 @@
 // #define SYS_rename      26
 // #define SYS_shutdown   210
 
+// updated
+#define SYS_getcwd      17
+
 // exist
 #define SYS_fork         1
 #define SYS_exit        93
@@ -55,7 +58,6 @@
 #define SYS_test_proc   22
 #define SYS_dev         23
 #define SYS_readdir     25
-#define SYS_getcwd      17
 #define SYS_rename      26
 
 // defined

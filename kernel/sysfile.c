@@ -511,9 +511,16 @@ sys_readdir(void)
 uint64
 sys_getcwd(void)
 {
-  uint64 addr;
-  if (argaddr(0, &addr) < 0)
-    return -1;
+  uint64 buf;
+  int size;
+  if(argaddr(0, &buf) < 0 || argint(1, &size) < 0){
+    printf("wrong input\n");
+    return NULL;
+  }
+
+  // uint64 addr;
+  // if (argaddr(0, &addr) < 0)
+  //   return -1;
 
   struct dirent *de = myproc()->cwd;
   char path[FAT32_MAX_PATH];
@@ -536,11 +543,18 @@ sys_getcwd(void)
     }
   }
 
+  if(strlen(s) + 1 > size){
+    printf("too long to copy\n");
+    return NULL;
+  }
+
   // if (copyout(myproc()->pagetable, addr, s, strlen(s) + 1) < 0)
-  if (copyout2(addr, s, strlen(s) + 1) < 0)
-    return -1;
+  if (copyout2(buf, s, strlen(s) + 1) < 0){
+    printf("unable to copy\n");
+    return NULL;
+  }
   
-  return 0;
+  return buf;
 
 }
 
