@@ -141,3 +141,13 @@ strchr(const char *s, char c)
       return (char*)s;
   return 0;
 }
+
+char* str_mycat(char *dest, const char *src, int max_len) {
+    int dest_len = strlen(dest);
+    int remain_space = max_len - dest_len - 1;  // 减1确保有空间放置字符串结尾的空字符
+    if (remain_space > 0) {
+        strncpy(dest + dest_len, src, remain_space);
+    }
+    dest[max_len - 1] = '\0';  // 确保字符串以空字符结尾
+    return dest;
+}

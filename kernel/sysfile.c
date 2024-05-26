@@ -168,20 +168,25 @@ sys_open(void)
   struct file *f;
   struct dirent *ep;
 
-  if(argstr(0, path, FAT32_MAX_PATH) < 0 || argint(1, &omode) < 0)
+  if(argstr(0, path, FAT32_MAX_PATH) < 0 || argint(1, &omode) < 0){
+    printf("%s\n %d\n", path, omode);
     return -1;
+  }
 
   if(omode & O_CREATE){
     ep = create(path, T_FILE, omode);
     if(ep == NULL){
+      printf("creat null: %d\n", omode);
       return -1;
     }
   } else {
     if((ep = ename(path)) == NULL){
+      printf("creat null: %d\n",omode);
       return -1;
     }
     elock(ep);
-    if((ep->attribute & ATTR_DIRECTORY) && omode != O_RDONLY){
+    if((ep->attribute & ATTR_DIRECTORY) && (omode != O_RDONLY && omode != O_DIRECTORY)){
+      printf("show O_DIRECTORY: %d \n", omode);
       eunlock(ep);
       eput(ep);
       return -1;
@@ -194,6 +199,7 @@ sys_open(void)
     }
     eunlock(ep);
     eput(ep);
+    printf("unable to open: %d\n", omode);
     return -1;
   }
 
@@ -208,8 +214,181 @@ sys_open(void)
   f->writable = (omode & O_WRONLY) || (omode & O_RDWR);
 
   eunlock(ep);
-
   return fd;
+}
+
+uint64 sys_openat(void){
+  int fd;
+  char path[FAT32_MAX_PATH];
+  int flags;
+  int mode;
+  struct dirent *ep;
+  struct file *f;
+  if(argint(0, &fd) < 0 || argstr(1, path, FAT32_MAX_PATH) < 0
+      || argint(2, &flags) < 0 || argint(3, &mode) < 0)
+    return -1;
+  if(*path == '\0')
+    return -1;
+
+  if(path[0] == '/' ){
+    int new_fd;
+    if(flags & O_CREATE){
+      ep = create(path, T_FILE, flags);
+      if(ep == NULL){
+        printf("creat null: %d\n", flags);
+        return -1;
+      }
+    } else {
+      if((ep = ename(path)) == NULL){
+        printf("creat null: %d\n", flags);
+        return -1;
+      }
+      elock(ep);
+      if((ep->attribute & ATTR_DIRECTORY) && (flags != O_RDONLY && flags != O_DIRECTORY)){
+        eunlock(ep);
+        eput(ep);
+        printf("show O_DIRECTORY: %d \n", flags);
+        return -1;
+      }
+    }
+
+    if((f = filealloc()) == NULL || (new_fd = fdalloc(f)) < 0){
+      if (f) {
+        fileclose(f);
+      }
+      eunlock(ep);
+      eput(ep);
+      printf("unable to open: %d\n", flags);
+      return -1;
+    }
+
+    if(!(ep->attribute & ATTR_DIRECTORY) && (flags & O_TRUNC)){
+      etrunc(ep);
+    }
+
+    f->type = FD_ENTRY;
+    f->off = (flags & O_APPEND) ? ep->file_size : 0;
+    f->ep = ep;
+    f->readable = !(flags & O_WRONLY);
+    f->writable = (flags & O_WRONLY) || (flags & O_RDWR);
+
+    eunlock(ep);
+
+    return new_fd;
+  }
+  else if(fd == -100){
+    struct proc* current_proc = myproc();
+    struct dirent *cwd = current_proc->cwd;
+    char parent_filename[FAT32_MAX_FILENAME + 1];
+    if(strncpy(parent_filename, cwd->filename, FAT32_MAX_FILENAME + 1) ==  NULL)
+      return -1;
+    str_mycat(parent_filename, "/", FAT32_MAX_FILENAME);
+    str_mycat(parent_filename, path, FAT32_MAX_FILENAME);
+    char filename[FAT32_MAX_FILENAME + 1];
+    strncpy(filename, parent_filename, FAT32_MAX_FILENAME);
+    int new_fd;
+    if(flags & O_CREATE){
+      ep = create(filename, T_FILE, flags);
+      if(ep == NULL){
+        printf("creat null: %d\n", flags);
+        return -1;
+      }
+    } else {
+      if((ep = ename(filename)) == NULL){
+        printf("creat null: %d\n", flags);
+        return -1;
+      }
+      elock(ep);
+      if((ep->attribute & ATTR_DIRECTORY) && (flags != O_RDONLY && flags != O_DIRECTORY)){
+        eunlock(ep);
+        eput(ep);
+        printf("show O_DIRECTORY: %d \n", flags);
+        return -1;
+      }
+    }
+
+    if((f = filealloc()) == NULL || (new_fd = fdalloc(f)) < 0){
+      if (f) {
+        fileclose(f);
+      }
+      eunlock(ep);
+      eput(ep);
+      printf("unable to open: %d\n", flags);
+      return -1;
+    }
+
+    if(!(ep->attribute & ATTR_DIRECTORY) && (flags & O_TRUNC)){
+      etrunc(ep);
+    }
+
+    f->type = FD_ENTRY;
+    f->off = (flags & O_APPEND) ? ep->file_size : 0;
+    f->ep = ep;
+    f->readable = !(flags & O_WRONLY);
+    f->writable = (flags & O_WRONLY) || (flags & O_RDWR);
+
+    eunlock(ep);
+
+    return new_fd;
+  }
+  else{
+    if(fd < 0)
+      return -1;
+
+    struct proc* current_proc = myproc();
+    struct file *f = current_proc->ofile[fd];
+    if(f == 0)
+      return -1;
+
+    char filename[FAT32_MAX_FILENAME + 1];
+    strncpy(filename, f->ep->filename, FAT32_MAX_FILENAME);
+    str_mycat(filename, "/", FAT32_MAX_FILENAME);
+    str_mycat(filename, path, FAT32_MAX_FILENAME);
+    int new_fd;
+    if(flags & O_CREATE){
+      ep = create(filename, T_FILE, flags);
+      if(ep == NULL){
+        printf("creat null: %d\n", flags);
+        return -1;
+      }
+    } else {
+      if((ep = ename(filename)) == NULL){
+        printf("find null: %d\n", flags);
+        return -1;
+      }
+      elock(ep);
+      if((ep->attribute & ATTR_DIRECTORY) && (flags != O_RDONLY && flags != O_DIRECTORY)){
+        eunlock(ep);
+        eput(ep);
+        printf("show O_DIRECTORY: %d \n", flags);
+        return -1;
+      }
+    }
+
+    if((f = filealloc()) == NULL || (new_fd = fdalloc(f)) < 0){
+      if (f) {
+        fileclose(f);
+      }
+      eunlock(ep);
+      eput(ep);
+      printf("unable to open: %d\n", flags);
+      return -1;
+    }
+
+    if(!(ep->attribute & ATTR_DIRECTORY) && (flags & O_TRUNC)){
+      etrunc(ep);
+    }
+
+    f->type = FD_ENTRY;
+    f->off = (flags & O_APPEND) ? ep->file_size : 0;
+    f->ep = ep;
+    f->readable = !(flags & O_WRONLY);
+    f->writable = (flags & O_WRONLY) || (flags & O_RDWR);
+
+    eunlock(ep);
+
+    return new_fd;
+  }
 }
 
 uint64

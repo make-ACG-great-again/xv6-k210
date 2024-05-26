@@ -30,8 +30,9 @@
 // #define SYS_rename      26
 // #define SYS_shutdown   210
 
+// exist
 #define SYS_fork         1
-#define SYS_exit         93
+#define SYS_exit        93
 #define SYS_wait         3
 #define SYS_pipe         4
 #define SYS_read        63
@@ -56,11 +57,14 @@
 #define SYS_readdir     25
 #define SYS_getcwd      17
 #define SYS_rename      26
-#define SYS_shutdown   210
 
+// defined
+#define SYS_openat      56
+
+// undefined
+#define SYS_shutdown   210
 #define SYS_pipe2       59
 #define SYS_dup3        24
-#define SYS_openat      56
 #define SYS_getdents64  61
 #define SYS_linkat      37
 #define SYS_unlinkat    35
