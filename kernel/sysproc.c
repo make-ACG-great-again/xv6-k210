@@ -78,12 +78,41 @@ sys_fork(void)
 }
 
 uint64
+sys_clone(void){
+  int flags, ptid, ctid;
+  uint64 stack, tls;
+
+  if(argint(0, &flags) < 0 || argaddr(1, &stack) < 0
+      || argint(2, &ptid) < 0 || argaddr(3, &tls) < 0
+        || argint(4, &ctid) < 0){
+    printf("wrong input\n");
+    return -1;
+  }
+
+return clone(flags, stack, ptid, tls, ctid);
+}
+
+uint64
 sys_wait(void)
 {
   uint64 p;
   if(argaddr(0, &p) < 0)
     return -1;
   return wait(p);
+}
+
+uint64
+sys_wait4(void)
+{
+  int pid;
+  uint64 p;
+  int options;
+  if(argint(0, &pid) < 0 || argaddr(1, &p) < 0 || argint(2, &options) < 0){
+    printf("wrong input\n");
+    return -1;
+  }
+
+  return wait4(pid, p, options);
 }
 
 uint64

@@ -1,6 +1,10 @@
 #ifndef __PROC_H
 #define __PROC_H
 
+#define WNOHANG     1
+#define WUNTRACED   2
+#define WCONTINUED  8
+
 #include "param.h"
 #include "riscv.h"
 #include "types.h"
@@ -63,7 +67,9 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct dirent *cwd;          // Current directory
   char name[16];               // Process name (debugging)
-  int tmask;                    // trace mask
+  int tmask;                   // trace mask
+  int stopped;                 // ever stops but does not inform parent
+  int continued;               // ever recover from stopped but does not inform parent
 };
 
 void            reg_info(void);
@@ -91,5 +97,7 @@ int             either_copyin(void *dst, int user_src, uint64 src, uint64 len);
 void            procdump(void);
 uint64          procnum(void);
 void            test_proc_init(int);
+int             clone(int flags, uint64 stack, int ptid, uint64 tls, int ctid);
+int             wait4(int pid, uint64 addr, int options);
 
 #endif

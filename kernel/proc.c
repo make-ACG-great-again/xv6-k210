@@ -478,7 +478,6 @@ void
 userinit(void)
 {
   struct proc *p;
-
   p = allocproc();
   initproc = p;
   
@@ -571,6 +570,73 @@ fork(void)
   release(&np->lock);
 
   return pid;
+}
+
+int
+clone(int flags, uint64 stack, int ptid, uint64 tls, int ctid)
+{
+  struct proc *p;
+  struct proc* np;
+
+  int find = 0;
+  for(p = proc; p < &proc[NPROC]; p++) {
+    if(p->pid == ptid){
+      find = 1;
+      break;
+    }
+    if(p->pid == ctid && ctid > 0){
+      printf("ctid already exists\n");
+      return -1;
+    }
+  }
+  if(find == 0 || ptid <= 0){
+    p = myproc();
+    ptid = p->pid;
+  }
+
+  // Allocate process.
+  if((np = allocproc()) == NULL){
+    printf("unable to alloc more\n");
+    return -1;
+  }
+   // Copy user memory from parent to child.
+  if(uvmcopy(p->pagetable, np->pagetable, np->kpagetable, p->sz) < 0){
+    freeproc(np);
+    release(&np->lock);
+    return -1;
+  }
+  np->sz = p->sz;
+  np->parent = p;
+  // copy tracing mask from parent.
+  np->tmask = p->tmask;
+
+  // copy saved user registers.
+  *(np->trapframe) = *(p->trapframe);
+
+  // Cause fork to return 0 in the child.
+  np->trapframe->a0 = 0;
+
+  // increment reference counts on open file descriptors.
+  for(int i = 0; i < NOFILE; i++)
+    if(p->ofile[i])
+      np->ofile[i] = filedup(p->ofile[i]);
+  np->cwd = edup(p->cwd);
+  safestrcpy(np->name, p->name, sizeof(p->name));
+  np->state = RUNNABLE;
+
+  //individualize
+  //first set stack
+  if((void*)stack != NULL)
+    np->kstack = stack;
+  if(ctid > 0)
+    np->pid = ctid;
+  else
+    ctid = np->pid;
+  // np->xstate = flags & 127;
+
+
+  release(&np->lock);
+  return ctid;
 }
 
 // Pass p's abandoned children to init.
@@ -715,6 +781,110 @@ wait(uint64 addr)
   }
 }
 
+int wait4(int pid, uint64 addr, int options){
+  struct proc *np;
+  int havekids;
+  struct proc *p = myproc();
+  if(pid == -1){
+    acquire(&p->lock);
+
+    for(;;){
+      // Scan through table looking for exited children.
+      havekids = 0;
+      for(np = proc; np < &proc[NPROC]; np++){
+        // this code uses np->parent without holding np->lock.
+        // acquiring the lock first would cause a deadlock,
+        // since np might be an ancestor, and we already hold p->lock.
+        if(np->parent == p){
+          // np->parent can't change between the check and the acquire()
+          // because only the parent changes it, and we're the parent.
+          acquire(&np->lock);
+          havekids = 1;
+          if(((np->state == ZOMBIE || (np->state == SLEEPING && ((options & WUNTRACED) != 0) && np->stopped == 1)) && (options & WUNTRACED) == 0)
+                || (((options & WCONTINUED) != 0) && (np->continued == 1) && (np->state == RUNNING || np->state == RUNNABLE))){
+            // Found one.
+            np->stopped = 0;
+            np->continued = 0;
+            pid = np->pid;
+            if(addr != 0 && copyout2(addr, (char *)&np->xstate, sizeof(np->xstate)) < 0) {
+              release(&np->lock);
+              release(&p->lock);
+              printf("copy failed\n");
+              return -1;
+            }
+            freeproc(np);
+            release(&np->lock);
+            release(&p->lock);
+            return pid;
+          }
+          release(&np->lock);
+        }
+      }
+
+      // No point waiting if we don't have any children.
+      if(!havekids){
+        release(&p->lock);
+        printf("no child\n");
+        return -1;
+      }
+
+      if(p->killed){
+        release(&p->lock);
+        printf("you died\n");
+        return -1;
+      }
+      
+      if((options & WNOHANG) != 0){
+        return 0;
+      }
+
+      // Wait for a child to exit.
+      sleep(p, &p->lock);  //DOC: wait-sleep
+    }
+  }
+  else{
+    acquire(&p->lock);
+    int find = 0;
+
+    for(np = proc; np < &proc[NPROC]; np++){
+      if(np->pid == pid && np->parent == p){
+        find = 1;
+        break;
+      }
+    }
+
+    if(find == 0){
+      printf("no child's pid = %d\n", pid);
+      return -1;
+    }
+    for(;;){
+      acquire(&np->lock);
+      if(((np->state == ZOMBIE || (np->state == SLEEPING && ((options & WUNTRACED) != 0) && np->stopped == 1)) && (options & WUNTRACED) == 0)
+            || ((options & WCONTINUED) != 0 && (np->continued == 1) && (np->state == RUNNING || np->state == RUNNABLE))){
+        np->stopped = 0;
+        np->continued = 0;
+        if(addr != 0 && copyout2(addr, (char *)&np->xstate, sizeof(np->xstate)) < 0) {
+          release(&np->lock);
+          release(&p->lock);
+          printf("copy failed\n");
+          return -1;
+        }
+        freeproc(np);
+        release(&np->lock);
+        release(&p->lock);
+        return pid;
+      }
+      release(&np->lock);
+      
+      if((options & WNOHANG) != 0){
+        return 0;
+      }
+
+      sleep(p, &p->lock); 
+    }
+  }
+}
+
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
 // Scheduler never returns.  It loops, doing:
@@ -847,6 +1017,8 @@ sleep(void *chan, struct spinlock *lk)
   // Go to sleep.
   p->chan = chan;
   p->state = SLEEPING;
+  p->stopped = 1;
+  p->continued = 0;
 
   sched();
 
@@ -871,6 +1043,8 @@ wakeup(void *chan)
     acquire(&p->lock);
     if(p->state == SLEEPING && p->chan == chan) {
       p->state = RUNNABLE;
+      p->stopped = 0;
+      p->continued = 1;
     }
     release(&p->lock);
   }

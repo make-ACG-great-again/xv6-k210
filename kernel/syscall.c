@@ -118,6 +118,9 @@ extern uint64 sys_sysinfo(void);
 extern uint64 sys_rename(void);
 extern uint64 sys_openat(void);
 extern uint64 sys_mkdirat(void);
+extern uint64 sys_pipe2(void);
+extern uint64 sys_clone(void);
+extern uint64 sys_wait4(void);
 
 static uint64 (*syscalls[])(void) = {
   [SYS_fork]        sys_fork,
@@ -148,6 +151,9 @@ static uint64 (*syscalls[])(void) = {
   [SYS_rename]      sys_rename,
   [SYS_openat]      sys_openat,
   [SYS_mkdirat]     sys_mkdirat,
+  [SYS_pipe2]       sys_pipe2,
+  [SYS_clone]       sys_clone,
+  [SYS_wait4]       sys_wait4,
 };
 
 static char *sysnames[] = {
@@ -179,6 +185,9 @@ static char *sysnames[] = {
   [SYS_rename]      "rename",
   [SYS_openat]      "openat",
   [SYS_mkdirat]     "mkdirat",
+  [SYS_pipe2]       "pipe2",
+  [SYS_clone]       "clone",
+  [SYS_wait4]       "wait4",
 };
 
 void

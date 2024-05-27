@@ -544,6 +544,32 @@ sys_pipe(void)
   return 0;
 }
 
+uint64
+sys_pipe2(void)
+{
+  uint64 fdarray; // user pointer to array of two integers
+  int fd0, fd1;
+  struct file *rf, *wf;
+  struct proc *p = myproc();
+
+  if(argaddr(0, &fdarray) < 0)
+    return -1;
+
+  if(copyin2((char*)&fd0, fdarray, sizeof(fd0)) < 0 ||
+     copyin2((char *)&fd1, fdarray+sizeof(fd0), sizeof(fd1)) < 0){
+    printf("error in getting input\n");
+    return -1;
+  }
+
+  if(pipealloc(&rf, &wf) < 0)
+    return -1;
+  
+  p->ofile[fd0] = rf;
+  p->ofile[fd1] = wf;
+
+  return 0;
+}
+
 // To open console device.
 uint64
 sys_dev(void)
