@@ -58,7 +58,7 @@
 #define SYS_mkdir       20
 #define SYS_close       57  //ok
 #define SYS_test_proc   22
-#define SYS_dev         24
+#define SYS_dev         21
 #define SYS_readdir     25
 #define SYS_rename      26
 
@@ -67,10 +67,10 @@
 #define SYS_mkdirat     34
 #define SYS_wait4       260
 #define SYS_clone       220
+#define SYS_pipe2       59
 
 // undefined
-#define SYS_shutdown   210
-#define SYS_pipe2       59
+#define SYS_shutdown   `210
 #define SYS_dup3        24
 #define SYS_getdents64  61
 #define SYS_linkat      37

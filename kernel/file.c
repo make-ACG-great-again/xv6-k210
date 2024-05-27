@@ -151,7 +151,6 @@ int
 filewrite(struct file *f, uint64 addr, int n)
 {
   int ret = 0;
-
   if(f->writable == 0)
     return -1;
 

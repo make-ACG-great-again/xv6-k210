@@ -32,6 +32,7 @@ argfd(int n, int *pfd, struct file **pf)
 
   if(argint(n, &fd) < 0)
     return -1;
+  
   if(fd < 0 || fd >= NOFILE || (f=myproc()->ofile[fd]) == NULL)
     return -1;
   if(pfd)
@@ -89,6 +90,21 @@ sys_dup(void)
 }
 
 uint64
+sys_dup3(void)
+{
+  struct file *f;
+  int fd;
+
+  if(argfd(0, 0, &f) < 0 || argint(1, &fd) < 0){
+    printf("wrong input");
+    return -1;
+  }
+  myproc()->ofile[fd] = f;
+  filedup(f);
+  return fd;
+}
+
+uint64
 sys_read(void)
 {
   struct file *f;
@@ -107,9 +123,9 @@ sys_write(void)
   int n;
   uint64 p;
 
-  if(argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argaddr(1, &p) < 0)
+  if(argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argaddr(1, &p) < 0){
     return -1;
-
+  }
   return filewrite(f, p, n);
 }
 
@@ -564,8 +580,6 @@ sys_pipe2(void)
     fileclose(wf);
     return -1;
   }
-  // if(copyout(p->pagetable, fdarray, (char*)&fd0, sizeof(fd0)) < 0 ||
-  //    copyout(p->pagetable, fdarray+sizeof(fd0), (char *)&fd1, sizeof(fd1)) < 0){
   if(copyout2(fdarray, (char*)&fd0, sizeof(fd0)) < 0 ||
      copyout2(fdarray+sizeof(fd0), (char *)&fd1, sizeof(fd1)) < 0){
     p->ofile[fd0] = 0;
