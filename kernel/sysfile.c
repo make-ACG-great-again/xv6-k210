@@ -276,12 +276,20 @@ uint64 sys_openat(void){
 
     return new_fd;
   }
-  else if(fd == -100){
+  else if(fd == AT_FDCWD){
     struct proc* current_proc = myproc();
     struct dirent *cwd = current_proc->cwd;
     char parent_filename[FAT32_MAX_FILENAME + 1];
     if(strncpy(parent_filename, cwd->filename, FAT32_MAX_FILENAME + 1) ==  NULL)
       return -1;
+    char temp[FAT32_MAX_FILENAME];
+    while(cwd->parent != NULL){
+      cwd = cwd->parent;
+      strncpy(temp, cwd->filename, FAT32_MAX_FILENAME);
+      str_mycat(temp, "/", FAT32_MAX_FILENAME);
+      str_mycat(temp, parent_filename, FAT32_MAX_FILENAME);
+      strncpy(parent_filename, temp, FAT32_MAX_FILENAME);
+    }
     str_mycat(parent_filename, "/", FAT32_MAX_FILENAME);
     str_mycat(parent_filename, path, FAT32_MAX_FILENAME);
     char filename[FAT32_MAX_FILENAME + 1];
@@ -340,8 +348,17 @@ uint64 sys_openat(void){
     if(f == 0)
       return -1;
 
+    struct dirent* cwd = f->ep;
     char filename[FAT32_MAX_FILENAME + 1];
-    strncpy(filename, f->ep->filename, FAT32_MAX_FILENAME);
+    char temp[FAT32_MAX_FILENAME + 1];
+    strncpy(filename, cwd->filename, FAT32_MAX_FILENAME);
+    while(cwd->parent != NULL){
+      cwd = cwd->parent;
+      strncpy(temp, cwd->filename, FAT32_MAX_FILENAME);
+      str_mycat(temp, "/", FAT32_MAX_FILENAME);
+      str_mycat(temp, filename, FAT32_MAX_FILENAME);
+      strncpy(filename, temp, FAT32_MAX_FILENAME);
+    }
     str_mycat(filename, "/", FAT32_MAX_FILENAME);
     str_mycat(filename, path, FAT32_MAX_FILENAME);
     int new_fd;
@@ -402,6 +419,79 @@ sys_mkdir(void)
   }
   eunlock(ep);
   eput(ep);
+  return 0;
+}
+
+uint64
+sys_mkdirat(void)
+{
+  int dirfd;
+  char path[FAT32_MAX_PATH];
+  int mode;
+  if(argint(0, &dirfd) < 0 || argstr(1, path, FAT32_MAX_PATH) < 0 || argint(2, &mode) < 0){
+    printf("wrong input\n");
+    return -1;
+  }
+
+  if(path[0] == '/' ){
+    struct dirent *ep;
+    ep = create(path, T_DIR, 0);
+    eunlock(ep);
+    eput(ep);
+    return 0;
+  }
+  else if(dirfd == AT_FDCWD){
+    struct proc* current_proc = myproc();
+    struct dirent *cwd = current_proc->cwd;
+    char parent_dirname[FAT32_MAX_FILENAME + 1];
+    if(strncpy(parent_dirname, cwd->filename, FAT32_MAX_FILENAME + 1) ==  NULL)
+        return -1;
+    char temp[FAT32_MAX_FILENAME];
+    while(cwd->parent != NULL){
+      cwd = cwd->parent;
+      strncpy(temp, cwd->filename, FAT32_MAX_FILENAME);
+      str_mycat(temp, "/", FAT32_MAX_FILENAME);
+      str_mycat(temp, parent_dirname, FAT32_MAX_FILENAME);
+      strncpy(parent_dirname, temp, FAT32_MAX_FILENAME);
+    }
+    str_mycat(parent_dirname, "/", FAT32_MAX_FILENAME);
+    str_mycat(parent_dirname, path, FAT32_MAX_FILENAME);
+    char dirname[FAT32_MAX_FILENAME + 1];
+    strncpy(dirname, parent_dirname, FAT32_MAX_FILENAME);
+    struct dirent *ep;
+    ep = create(dirname, T_DIR, 0);
+    eunlock(ep);
+    eput(ep);
+    return 0;
+  }
+  else{
+    if(dirfd < 0)
+      return -1;
+
+    struct proc* current_proc = myproc();
+    struct file *f = current_proc->ofile[dirfd];
+    if(f == 0)
+      return -1;
+
+    struct dirent* cwd = f->ep;
+    char dirname[FAT32_MAX_FILENAME + 1];
+    char temp[FAT32_MAX_FILENAME + 1];
+    strncpy(dirname, cwd->filename, FAT32_MAX_FILENAME);
+    while(cwd->parent != NULL){
+      cwd = cwd->parent;
+      strncpy(temp, cwd->filename, FAT32_MAX_FILENAME);
+      str_mycat(temp, "/", FAT32_MAX_FILENAME);
+      str_mycat(temp, dirname, FAT32_MAX_FILENAME);
+      strncpy(dirname, temp, FAT32_MAX_FILENAME);
+    }
+    str_mycat(dirname, "/", FAT32_MAX_FILENAME);
+    str_mycat(dirname, path, FAT32_MAX_FILENAME);
+    struct dirent *ep;
+    ep = create(dirname, T_DIR, 0);
+    eunlock(ep);
+    eput(ep);
+    return 0;
+  }
   return 0;
 }
 

@@ -1,7 +1,7 @@
 #ifndef __SYSNUM_H
 #define __SYSNUM_H
 
-//System call numbers
+//System call numbers (saved)
 // #define SYS_fork         1
 // #define SYS_exit         2
 // #define SYS_wait         3
@@ -33,28 +33,30 @@
 // updated
 #define SYS_getcwd      17
 
-// exist
-#define SYS_fork         1
-#define SYS_exit        93
-#define SYS_wait         3
-#define SYS_pipe         4
-#define SYS_read        63
-#define SYS_kill         6
-#define SYS_exec         7
+//dealing
 #define SYS_fstat       80
 #define SYS_chdir       49
-#define SYS_dup         23
-#define SYS_getpid     172
+#define SYS_exit        93
+
+// exist
+#define SYS_fork         1
+#define SYS_wait         3
+#define SYS_pipe         4
+#define SYS_read        63  //ok
+#define SYS_kill         6
+#define SYS_exec         7
+#define SYS_dup         23  //ok
+#define SYS_getpid     172  //ok
 #define SYS_sbrk        12
 #define SYS_sleep       13
 #define SYS_uptime      14
 #define SYS_open        15
-#define SYS_write       64
+#define SYS_write       64  //ok
 #define SYS_remove      16
 #define SYS_trace       18
 #define SYS_sysinfo     19
 #define SYS_mkdir       20
-#define SYS_close       57
+#define SYS_close       57  //ok
 #define SYS_test_proc   22
 #define SYS_dev         24
 #define SYS_readdir     25
