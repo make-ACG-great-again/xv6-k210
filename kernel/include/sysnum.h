@@ -35,7 +35,6 @@
 
 //dealing
 #define SYS_fstat       80
-#define SYS_chdir       49
 #define SYS_exit        93
 
 // exist
@@ -45,6 +44,7 @@
 #define SYS_read        63  //ok
 #define SYS_kill         6
 #define SYS_exec         7
+#define SYS_chdir       49
 #define SYS_dup         23  //ok
 #define SYS_getpid     172  //ok
 #define SYS_sbrk        12
@@ -64,6 +64,7 @@
 
 // defined
 #define SYS_openat      56
+#define SYS_mkdirat     34
 
 // undefined
 #define SYS_shutdown   210
@@ -72,7 +73,6 @@
 #define SYS_getdents64  61
 #define SYS_linkat      37
 #define SYS_unlinkat    35
-#define SYS_mkdirat     34
 #define SYS_umount2     39
 #define SYS_mount       40
 #define SYS_clone       220

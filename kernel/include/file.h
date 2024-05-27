@@ -22,6 +22,28 @@ struct devsw {
   int (*write)(int, uint64, int);
 };
 
+struct kstat {
+	int st_dev;
+	int st_ino;
+	int st_mode;
+	int st_nlink;
+	int st_uid;
+	int st_gid;
+	int st_rdev;
+	unsigned long __pad;
+	int st_size;
+	int st_blksize;
+	int __pad2;
+	int st_blocks;
+	long st_atime_sec;
+	long st_atime_nsec;
+	long st_mtime_sec;
+	long st_mtime_nsec;
+	long st_ctime_sec;
+	long st_ctime_nsec;
+	unsigned __unused[2];
+};
+
 extern struct devsw devsw[];
 
 #define CONSOLE 1

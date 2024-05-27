@@ -41,6 +41,22 @@ argfd(int n, int *pfd, struct file **pf)
   return 0;
 }
 
+int get_abspath(struct dirent* cwd, char* path){
+  strncpy(path, cwd->filename, FAT32_MAX_FILENAME + 1);
+  if(path == NULL) return -1;
+  char temp[FAT32_MAX_FILENAME];
+  while(cwd->parent != NULL){
+    cwd = cwd->parent;
+    strncpy(temp, cwd->filename, FAT32_MAX_FILENAME);
+    if(temp == NULL) return -1;
+    str_mycat(temp, "/", FAT32_MAX_FILENAME);
+    str_mycat(temp, path, FAT32_MAX_FILENAME);
+    strncpy(path, temp, FAT32_MAX_FILENAME);
+    if(path == NULL) return -1;
+  }
+  return 0;
+}
+
 // Allocate a file descriptor for the given file.
 // Takes over file reference from caller on success.
 static int
@@ -280,15 +296,9 @@ uint64 sys_openat(void){
     struct proc* current_proc = myproc();
     struct dirent *cwd = current_proc->cwd;
     char parent_filename[FAT32_MAX_FILENAME + 1];
-    if(strncpy(parent_filename, cwd->filename, FAT32_MAX_FILENAME + 1) ==  NULL)
+    if(get_abspath(cwd, parent_filename) < 0){
+      printf("wrong path\n");
       return -1;
-    char temp[FAT32_MAX_FILENAME];
-    while(cwd->parent != NULL){
-      cwd = cwd->parent;
-      strncpy(temp, cwd->filename, FAT32_MAX_FILENAME);
-      str_mycat(temp, "/", FAT32_MAX_FILENAME);
-      str_mycat(temp, parent_filename, FAT32_MAX_FILENAME);
-      strncpy(parent_filename, temp, FAT32_MAX_FILENAME);
     }
     str_mycat(parent_filename, "/", FAT32_MAX_FILENAME);
     str_mycat(parent_filename, path, FAT32_MAX_FILENAME);
@@ -350,14 +360,9 @@ uint64 sys_openat(void){
 
     struct dirent* cwd = f->ep;
     char filename[FAT32_MAX_FILENAME + 1];
-    char temp[FAT32_MAX_FILENAME + 1];
-    strncpy(filename, cwd->filename, FAT32_MAX_FILENAME);
-    while(cwd->parent != NULL){
-      cwd = cwd->parent;
-      strncpy(temp, cwd->filename, FAT32_MAX_FILENAME);
-      str_mycat(temp, "/", FAT32_MAX_FILENAME);
-      str_mycat(temp, filename, FAT32_MAX_FILENAME);
-      strncpy(filename, temp, FAT32_MAX_FILENAME);
+    if(get_abspath(cwd, filename) < 0){
+      printf("wrong path\n");
+      return -1;
     }
     str_mycat(filename, "/", FAT32_MAX_FILENAME);
     str_mycat(filename, path, FAT32_MAX_FILENAME);
@@ -444,15 +449,9 @@ sys_mkdirat(void)
     struct proc* current_proc = myproc();
     struct dirent *cwd = current_proc->cwd;
     char parent_dirname[FAT32_MAX_FILENAME + 1];
-    if(strncpy(parent_dirname, cwd->filename, FAT32_MAX_FILENAME + 1) ==  NULL)
-        return -1;
-    char temp[FAT32_MAX_FILENAME];
-    while(cwd->parent != NULL){
-      cwd = cwd->parent;
-      strncpy(temp, cwd->filename, FAT32_MAX_FILENAME);
-      str_mycat(temp, "/", FAT32_MAX_FILENAME);
-      str_mycat(temp, parent_dirname, FAT32_MAX_FILENAME);
-      strncpy(parent_dirname, temp, FAT32_MAX_FILENAME);
+    if(get_abspath(cwd, parent_dirname) < 0){
+      printf("wrong path\n");
+      return -1;
     }
     str_mycat(parent_dirname, "/", FAT32_MAX_FILENAME);
     str_mycat(parent_dirname, path, FAT32_MAX_FILENAME);
@@ -475,14 +474,9 @@ sys_mkdirat(void)
 
     struct dirent* cwd = f->ep;
     char dirname[FAT32_MAX_FILENAME + 1];
-    char temp[FAT32_MAX_FILENAME + 1];
-    strncpy(dirname, cwd->filename, FAT32_MAX_FILENAME);
-    while(cwd->parent != NULL){
-      cwd = cwd->parent;
-      strncpy(temp, cwd->filename, FAT32_MAX_FILENAME);
-      str_mycat(temp, "/", FAT32_MAX_FILENAME);
-      str_mycat(temp, dirname, FAT32_MAX_FILENAME);
-      strncpy(dirname, temp, FAT32_MAX_FILENAME);
+    if(get_abspath(cwd, dirname) < 0){
+      printf("wrong path\n");
+      return -1;
     }
     str_mycat(dirname, "/", FAT32_MAX_FILENAME);
     str_mycat(dirname, path, FAT32_MAX_FILENAME);
