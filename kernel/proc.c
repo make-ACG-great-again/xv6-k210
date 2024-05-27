@@ -591,9 +591,7 @@ clone(int flags, uint64 stack, int ptid, uint64 tls, int ctid)
   }
   if(find == 0 || ptid <= 0){
     p = myproc();
-    ptid = p->pid;
   }
-
   // Allocate process.
   if((np = allocproc()) == NULL){
     printf("unable to alloc more\n");
@@ -622,19 +620,20 @@ clone(int flags, uint64 stack, int ptid, uint64 tls, int ctid)
       np->ofile[i] = filedup(p->ofile[i]);
   np->cwd = edup(p->cwd);
   safestrcpy(np->name, p->name, sizeof(p->name));
-  np->state = RUNNABLE;
 
   //individualize
   //first set stack
-  if((void*)stack != NULL)
-    np->kstack = stack;
+  if(stack != 0){
+    np->trapframe->sp = stack;
+  }
   if(ctid > 0)
     np->pid = ctid;
   else
     ctid = np->pid;
-  // np->xstate = flags & 127;
-
-
+  np->xstate = flags & 127;
+  np->stopped = 0;
+  np->continued = 0;
+  np->state = RUNNABLE;
   release(&np->lock);
   return ctid;
 }
@@ -787,7 +786,6 @@ int wait4(int pid, uint64 addr, int options){
   struct proc *p = myproc();
   if(pid == -1){
     acquire(&p->lock);
-
     for(;;){
       // Scan through table looking for exited children.
       havekids = 0;
