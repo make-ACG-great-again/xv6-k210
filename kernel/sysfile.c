@@ -548,25 +548,32 @@ uint64
 sys_pipe2(void)
 {
   uint64 fdarray; // user pointer to array of two integers
-  int fd0, fd1;
   struct file *rf, *wf;
+  int fd0, fd1;
   struct proc *p = myproc();
 
   if(argaddr(0, &fdarray) < 0)
     return -1;
-
-  if(copyin2((char*)&fd0, fdarray, sizeof(fd0)) < 0 ||
-     copyin2((char *)&fd1, fdarray+sizeof(fd0), sizeof(fd1)) < 0){
-    printf("error in getting input\n");
-    return -1;
-  }
-
   if(pipealloc(&rf, &wf) < 0)
     return -1;
-  
-  p->ofile[fd0] = rf;
-  p->ofile[fd1] = wf;
-
+  fd0 = -1;
+  if((fd0 = fdalloc(rf)) < 0 || (fd1 = fdalloc(wf)) < 0){
+    if(fd0 >= 0)
+      p->ofile[fd0] = 0;
+    fileclose(rf);
+    fileclose(wf);
+    return -1;
+  }
+  // if(copyout(p->pagetable, fdarray, (char*)&fd0, sizeof(fd0)) < 0 ||
+  //    copyout(p->pagetable, fdarray+sizeof(fd0), (char *)&fd1, sizeof(fd1)) < 0){
+  if(copyout2(fdarray, (char*)&fd0, sizeof(fd0)) < 0 ||
+     copyout2(fdarray+sizeof(fd0), (char *)&fd1, sizeof(fd1)) < 0){
+    p->ofile[fd0] = 0;
+    p->ofile[fd1] = 0;
+    fileclose(rf);
+    fileclose(wf);
+    return -1;
+  }
   return 0;
 }
 
