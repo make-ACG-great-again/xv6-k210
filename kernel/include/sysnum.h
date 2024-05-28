@@ -71,6 +71,7 @@
 #define SYS_dup3        24
 #define SYS_linkat      37
 #define SYS_unlinkat    35
+#define SYS_sched_yield 124
 
 // undefined
 #define SYS_shutdown    210
@@ -84,7 +85,6 @@
 #define SYS_mmap        222
 #define SYS_times       153
 #define SYS_uname       160
-#define SYS_sched_yield 124
 #define SYS_gettimeofday 169
 #define SYS_nanosleep   101
 
