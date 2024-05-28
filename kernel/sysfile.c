@@ -755,3 +755,37 @@ uint64 sys_linkat(void){
   eunlock(ep);
   return 0;
 }
+
+uint64 sys_unlinkat(void){
+  int dirfd, flags;
+  char path[FAT32_MAX_PATH];
+
+  if(argint(0, &dirfd) < 0 || argstr(1, path, FAT32_MAX_PATH) < 0
+      || argint(2, &flags) < 0){
+    printf("error in unlinkat\n");
+    return -1;
+  }
+
+  if(get_path(path, dirfd) < 0){
+    printf("wrong path\n");
+    return -1;
+  }
+
+  struct dirent* ep;
+  if((ep = ename(path)) == NULL){
+    return -1;
+  }
+  elock(ep);
+  if((ep->attribute & ATTR_DIRECTORY) && ((!isdirempty(ep) && (flags & AT_REMOVEDIR) != 0) || (flags & AT_REMOVEDIR) == 0)){
+      eunlock(ep);
+      eput(ep);
+      return -1;
+  }
+  elock(ep->parent);      // Will this lead to deadlock?
+  eremove(ep);
+  eunlock(ep->parent);
+  eunlock(ep);
+  eput(ep);
+
+  return 0;
+}
