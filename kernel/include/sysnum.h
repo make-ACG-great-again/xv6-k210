@@ -69,12 +69,12 @@
 #define SYS_clone       220
 #define SYS_pipe2       59
 #define SYS_dup3        24
+#define SYS_linkat      37
+#define SYS_unlinkat    35
 
 // undefined
 #define SYS_shutdown    210
 #define SYS_getdents64  61
-#define SYS_linkat      37
-#define SYS_unlinkat    35
 #define SYS_umount2     39
 #define SYS_mount       40
 #define SYS_execve      221

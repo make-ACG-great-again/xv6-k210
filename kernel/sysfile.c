@@ -320,7 +320,7 @@ uint64 sys_openat(void){
     }
   } else {
     if((ep = ename(path)) == NULL){
-      printf("open null: %d\n", flags);
+      //printf("open null: %d\n", flags);
       return -1;
     }
     elock(ep);
