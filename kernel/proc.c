@@ -805,10 +805,8 @@ uint64 wait4(int pid, uint64 addr, int options){
             np->stopped = 0;
             np->continued = 0;
             pid = np->pid;
-            if(addr != 0 && copyout2(addr, (char *)&np->xstate, sizeof(np->xstate)) < 0) {
-              release(&np->lock);
-              release(&p->lock);
-              return -1;
+            if(addr != 0) {
+              *(int*)addr = (np->xstate << 8);
             }
             if(np->state == ZOMBIE){
               freeproc(np);
@@ -863,10 +861,8 @@ uint64 wait4(int pid, uint64 addr, int options){
             || ((options & WCONTINUED) != 0 && (np->continued == 1) && (np->state == RUNNING || np->state == RUNNABLE))){
         np->stopped = 0;
         np->continued = 0;
-        if(addr != 0 && copyout2(addr, (char *)&np->xstate, sizeof(np->xstate)) < 0) {
-          release(&np->lock);
-          release(&p->lock);
-          return -1;
+        if(addr != 0) {
+          *(int*)addr = (np->xstate << 8);
         }
         if(np->state == ZOMBIE){
           freeproc(np);
@@ -876,6 +872,7 @@ uint64 wait4(int pid, uint64 addr, int options){
         return pid;
       }
       release(&np->lock);
+      
       if((options & WNOHANG) != 0){
         return 0;
       }
