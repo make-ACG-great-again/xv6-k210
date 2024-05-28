@@ -58,6 +58,45 @@ int get_abspath(struct dirent* cwd, char* path){
   return 0;
 }
 
+int get_path(char* path, int fd){
+  if(path[0] == '/' ){
+    return 0;
+  }
+  else if(fd == AT_FDCWD){
+    struct proc* current_proc = myproc();
+    struct dirent *cwd = current_proc->cwd;
+    char parent_name[FAT32_MAX_FILENAME + 1];
+    if(get_abspath(cwd, parent_name) < 0){
+      printf("wrong path\n");
+      return -1;
+    }
+    str_mycat(parent_name, "/", FAT32_MAX_FILENAME);
+    str_mycat(parent_name, path, FAT32_MAX_FILENAME);
+    strncpy(path, parent_name, FAT32_MAX_FILENAME);
+    return 0;
+  }
+  else{
+    if(fd < 0)
+      return -1;
+
+    struct proc* current_proc = myproc();
+    struct file *f = current_proc->ofile[fd];
+    if(f == 0)
+      return -1;
+
+    struct dirent* cwd = f->ep;
+    char dirname[FAT32_MAX_FILENAME + 1];
+    if(get_abspath(cwd, dirname) < 0){
+      printf("wrong path\n");
+      return -1;
+    }
+    str_mycat(dirname, "/", FAT32_MAX_FILENAME);
+    str_mycat(dirname, path, FAT32_MAX_FILENAME);
+    strncpy(path, dirname, FAT32_MAX_FILENAME);
+    return 0;
+  }
+}
+
 // Allocate a file descriptor for the given file.
 // Takes over file reference from caller on success.
 static int
@@ -262,171 +301,55 @@ uint64 sys_openat(void){
   if(*path == '\0')
     return -1;
 
-  if(path[0] == '/' ){
-    int new_fd;
-    if(flags & O_CREATE){
-      ep = create(path, T_FILE, flags);
-      if(ep == NULL){
-        printf("creat null: %d\n", flags);
-        return -1;
-      }
-    } else {
-      if((ep = ename(path)) == NULL){
-        printf("creat null: %d\n", flags);
-        return -1;
-      }
-      elock(ep);
-      if((ep->attribute & ATTR_DIRECTORY) && (flags != O_RDONLY && flags != O_DIRECTORY)){
-        eunlock(ep);
-        eput(ep);
-        printf("show O_DIRECTORY: %d \n", flags);
-        return -1;
-      }
-    }
+  if(get_path(path, fd) < 0){
+    printf("error in openat\n");
+    return -1;
+  }
 
-    if((f = filealloc()) == NULL || (new_fd = fdalloc(f)) < 0){
-      if (f) {
-        fileclose(f);
-      }
+  int new_fd;
+  if(flags & O_CREATE){
+    ep = create(path, T_FILE, flags);
+    if(ep == NULL){
+      printf("creat null: %d\n", flags);
+      return -1;
+    }
+  } else {
+    if((ep = ename(path)) == NULL){
+      printf("creat null: %d\n", flags);
+      return -1;
+    }
+    elock(ep);
+    if((ep->attribute & ATTR_DIRECTORY) && (flags != O_RDONLY && flags != O_DIRECTORY)){
       eunlock(ep);
       eput(ep);
-      printf("unable to open: %d\n", flags);
+      printf("show O_DIRECTORY: %d \n", flags);
       return -1;
     }
-
-    if(!(ep->attribute & ATTR_DIRECTORY) && (flags & O_TRUNC)){
-      etrunc(ep);
-    }
-
-    f->type = FD_ENTRY;
-    f->off = (flags & O_APPEND) ? ep->file_size : 0;
-    f->ep = ep;
-    f->readable = !(flags & O_WRONLY);
-    f->writable = (flags & O_WRONLY) || (flags & O_RDWR);
-
-    eunlock(ep);
-
-    return new_fd;
   }
-  else if(fd == AT_FDCWD){
-    struct proc* current_proc = myproc();
-    struct dirent *cwd = current_proc->cwd;
-    char parent_filename[FAT32_MAX_FILENAME + 1];
-    if(get_abspath(cwd, parent_filename) < 0){
-      printf("wrong path\n");
-      return -1;
-    }
-    str_mycat(parent_filename, "/", FAT32_MAX_FILENAME);
-    str_mycat(parent_filename, path, FAT32_MAX_FILENAME);
-    char filename[FAT32_MAX_FILENAME + 1];
-    strncpy(filename, parent_filename, FAT32_MAX_FILENAME);
-    int new_fd;
-    if(flags & O_CREATE){
-      ep = create(filename, T_FILE, flags);
-      if(ep == NULL){
-        printf("creat null: %d\n", flags);
-        return -1;
-      }
-    } else {
-      if((ep = ename(filename)) == NULL){
-        printf("creat null: %d\n", flags);
-        return -1;
-      }
-      elock(ep);
-      if((ep->attribute & ATTR_DIRECTORY) && (flags != O_RDONLY && flags != O_DIRECTORY)){
-        eunlock(ep);
-        eput(ep);
-        printf("show O_DIRECTORY: %d \n", flags);
-        return -1;
-      }
-    }
 
-    if((f = filealloc()) == NULL || (new_fd = fdalloc(f)) < 0){
-      if (f) {
-        fileclose(f);
-      }
-      eunlock(ep);
-      eput(ep);
-      printf("unable to open: %d\n", flags);
-      return -1;
+  if((f = filealloc()) == NULL || (new_fd = fdalloc(f)) < 0){
+    if (f) {
+      fileclose(f);
     }
-
-    if(!(ep->attribute & ATTR_DIRECTORY) && (flags & O_TRUNC)){
-      etrunc(ep);
-    }
-
-    f->type = FD_ENTRY;
-    f->off = (flags & O_APPEND) ? ep->file_size : 0;
-    f->ep = ep;
-    f->readable = !(flags & O_WRONLY);
-    f->writable = (flags & O_WRONLY) || (flags & O_RDWR);
-
     eunlock(ep);
-
-    return new_fd;
+    eput(ep);
+    printf("unable to open: %d\n", flags);
+    return -1;
   }
-  else{
-    if(fd < 0)
-      return -1;
 
-    struct proc* current_proc = myproc();
-    struct file *f = current_proc->ofile[fd];
-    if(f == 0)
-      return -1;
-
-    struct dirent* cwd = f->ep;
-    char filename[FAT32_MAX_FILENAME + 1];
-    if(get_abspath(cwd, filename) < 0){
-      printf("wrong path\n");
-      return -1;
-    }
-    str_mycat(filename, "/", FAT32_MAX_FILENAME);
-    str_mycat(filename, path, FAT32_MAX_FILENAME);
-    int new_fd;
-    if(flags & O_CREATE){
-      ep = create(filename, T_FILE, flags);
-      if(ep == NULL){
-        printf("creat null: %d\n", flags);
-        return -1;
-      }
-    } else {
-      if((ep = ename(filename)) == NULL){
-        printf("find null: %d\n", flags);
-        return -1;
-      }
-      elock(ep);
-      if((ep->attribute & ATTR_DIRECTORY) && (flags != O_RDONLY && flags != O_DIRECTORY)){
-        eunlock(ep);
-        eput(ep);
-        printf("show O_DIRECTORY: %d \n", flags);
-        return -1;
-      }
-    }
-
-    if((f = filealloc()) == NULL || (new_fd = fdalloc(f)) < 0){
-      if (f) {
-        fileclose(f);
-      }
-      eunlock(ep);
-      eput(ep);
-      printf("unable to open: %d\n", flags);
-      return -1;
-    }
-
-    if(!(ep->attribute & ATTR_DIRECTORY) && (flags & O_TRUNC)){
-      etrunc(ep);
-    }
-
-    f->type = FD_ENTRY;
-    f->off = (flags & O_APPEND) ? ep->file_size : 0;
-    f->ep = ep;
-    f->readable = !(flags & O_WRONLY);
-    f->writable = (flags & O_WRONLY) || (flags & O_RDWR);
-
-    eunlock(ep);
-
-    return new_fd;
+  if(!(ep->attribute & ATTR_DIRECTORY) && (flags & O_TRUNC)){
+    etrunc(ep);
   }
+
+  f->type = FD_ENTRY;
+  f->off = (flags & O_APPEND) ? ep->file_size : 0;
+  f->ep = ep;
+  f->readable = !(flags & O_WRONLY);
+  f->writable = (flags & O_WRONLY) || (flags & O_RDWR);
+
+  eunlock(ep);
+
+  return new_fd;
 }
 
 uint64
@@ -454,54 +377,15 @@ sys_mkdirat(void)
     return -1;
   }
 
-  if(path[0] == '/' ){
-    struct dirent *ep;
-    ep = create(path, T_DIR, 0);
-    eunlock(ep);
-    eput(ep);
-    return 0;
+  if(get_path(path, dirfd) < 0){
+    printf("error in mkdirat\n");
+    return -1;
   }
-  else if(dirfd == AT_FDCWD){
-    struct proc* current_proc = myproc();
-    struct dirent *cwd = current_proc->cwd;
-    char parent_dirname[FAT32_MAX_FILENAME + 1];
-    if(get_abspath(cwd, parent_dirname) < 0){
-      printf("wrong path\n");
-      return -1;
-    }
-    str_mycat(parent_dirname, "/", FAT32_MAX_FILENAME);
-    str_mycat(parent_dirname, path, FAT32_MAX_FILENAME);
-    char dirname[FAT32_MAX_FILENAME + 1];
-    strncpy(dirname, parent_dirname, FAT32_MAX_FILENAME);
-    struct dirent *ep;
-    ep = create(dirname, T_DIR, 0);
-    eunlock(ep);
-    eput(ep);
-    return 0;
-  }
-  else{
-    if(dirfd < 0)
-      return -1;
 
-    struct proc* current_proc = myproc();
-    struct file *f = current_proc->ofile[dirfd];
-    if(f == 0)
-      return -1;
-
-    struct dirent* cwd = f->ep;
-    char dirname[FAT32_MAX_FILENAME + 1];
-    if(get_abspath(cwd, dirname) < 0){
-      printf("wrong path\n");
-      return -1;
-    }
-    str_mycat(dirname, "/", FAT32_MAX_FILENAME);
-    str_mycat(dirname, path, FAT32_MAX_FILENAME);
-    struct dirent *ep;
-    ep = create(dirname, T_DIR, 0);
-    eunlock(ep);
-    eput(ep);
-    return 0;
-  }
+  struct dirent *ep;
+  ep = create(path, T_DIR, 0);
+  eunlock(ep);
+  eput(ep);
   return 0;
 }
 

@@ -68,10 +68,10 @@
 #define SYS_wait4       260
 #define SYS_clone       220
 #define SYS_pipe2       59
+#define SYS_dup3        24
 
 // undefined
-#define SYS_shutdown   `210
-#define SYS_dup3        24
+#define SYS_shutdown    210
 #define SYS_getdents64  61
 #define SYS_linkat      37
 #define SYS_unlinkat    35
