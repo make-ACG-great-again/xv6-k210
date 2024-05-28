@@ -126,6 +126,7 @@ extern uint64 sys_linkat(void);
 extern uint64 sys_unlinkat(void);
 extern uint64 sys_sched_yield(void);
 extern uint64 sys_getppid(void);
+extern uint64 sys_execve(void);
 
 static uint64 (*syscalls[])(void) = {
   [SYS_fork]        sys_fork,
@@ -164,6 +165,7 @@ static uint64 (*syscalls[])(void) = {
   [SYS_unlinkat]    sys_unlinkat,
   [SYS_sched_yield] sys_sched_yield,
   [SYS_getppid]     sys_getppid,
+  [SYS_execve]      sys_execve,
 };
 
 static char *sysnames[] = {
@@ -203,6 +205,7 @@ static char *sysnames[] = {
   [SYS_unlinkat]    "unlinkat",
   [SYS_sched_yield] "sched_yield",
   [SYS_getppid]     "getppid",
+  [SYS_execve]      "execve",
 };
 
 void

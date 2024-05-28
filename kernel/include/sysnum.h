@@ -72,6 +72,7 @@
 #define SYS_linkat      37
 #define SYS_unlinkat    35
 #define SYS_sched_yield 124
+#define SYS_getppid     173
 
 // undefined
 #define SYS_shutdown    210
@@ -79,7 +80,6 @@
 #define SYS_umount2     39
 #define SYS_mount       40
 #define SYS_execve      221
-#define SYS_getppid     173
 #define SYS_brk         214
 #define SYS_munmap      215
 #define SYS_mmap        222
