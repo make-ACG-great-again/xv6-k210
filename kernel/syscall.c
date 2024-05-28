@@ -124,6 +124,7 @@ extern uint64 sys_wait4(void);
 extern uint64 sys_dup3(void);
 extern uint64 sys_linkat(void);
 extern uint64 sys_unlinkat(void);
+extern uint64 sys_sched_yield(void);
 
 static uint64 (*syscalls[])(void) = {
   [SYS_fork]        sys_fork,
@@ -160,6 +161,7 @@ static uint64 (*syscalls[])(void) = {
   [SYS_dup3]        sys_dup3,
   [SYS_linkat]      sys_linkat,
   [SYS_unlinkat]    sys_unlinkat,
+  [SYS_sched_yield] sys_sched_yield,
 };
 
 static char *sysnames[] = {
@@ -197,6 +199,7 @@ static char *sysnames[] = {
   [SYS_dup3]        "dup3",
   [SYS_linkat]      "linkat",
   [SYS_unlinkat]    "unlinkat",
+  [SYS_sched_yield] "sched_yield",
 };
 
 void

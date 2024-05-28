@@ -781,7 +781,7 @@ wait(uint64 addr)
   }
 }
 
-int wait4(int pid, uint64 addr, int options){
+uint64 wait4(int pid, uint64 addr, int options){
   struct proc *np;
   int havekids;
   struct proc *p = myproc();
@@ -805,13 +805,11 @@ int wait4(int pid, uint64 addr, int options){
             np->stopped = 0;
             np->continued = 0;
             pid = np->pid;
-            if(addr != 0 && copyout2(addr, (char *)&np->xstate, sizeof(np->xstate)) < 0) {
-              release(&np->lock);
-              release(&p->lock);
-              printf("copy failed\n");
-              return -1;
+            if(np->state == ZOMBIE){
+              if(addr != 0)
+                *((int*)addr) = np->xstate;
+              freeproc(np);
             }
-            freeproc(np);
             release(&np->lock);
             release(&p->lock);
             return pid;
@@ -858,19 +856,18 @@ int wait4(int pid, uint64 addr, int options){
     }
     for(;;){
       acquire(&np->lock);
-      if(((np->state == ZOMBIE || (np->state == SLEEPING && ((options & WUNTRACED) != 0) && np->stopped == 1)) && (options & WUNTRACED) == 0)
+      if(np->state == ZOMBIE || (np->state == SLEEPING && ((options & WUNTRACED) != 0) && np->stopped == 1 && (options & WCONTINUED) == 0)
             || ((options & WCONTINUED) != 0 && (np->continued == 1) && (np->state == RUNNING || np->state == RUNNABLE))){
         np->stopped = 0;
         np->continued = 0;
-        if(addr != 0 && copyout2(addr, (char *)&np->xstate, sizeof(np->xstate)) < 0) {
-          release(&np->lock);
-          release(&p->lock);
-          printf("copy failed\n");
-          return -1;
+        if(addr != 0)
+          *((int*)addr) = np->state;
+        if(np->state == ZOMBIE){
+          freeproc(np);
         }
-        freeproc(np);
         release(&np->lock);
         release(&p->lock);
+        printf("return:pid = %d, status = %d\n", (uint64)pid, *((int*) addr));
         return pid;
       }
       release(&np->lock);
@@ -878,7 +875,6 @@ int wait4(int pid, uint64 addr, int options){
       if((options & WNOHANG) != 0){
         return 0;
       }
-
       sleep(p, &p->lock); 
     }
   }
@@ -1058,6 +1054,8 @@ wakeup1(struct proc *p)
     panic("wakeup1");
   if(p->chan == p && p->state == SLEEPING) {
     p->state = RUNNABLE;
+    p->stopped = 0;
+    p->continued = 1;
   }
 }
 

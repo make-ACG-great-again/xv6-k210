@@ -77,8 +77,7 @@ sys_fork(void)
   return fork();
 }
 
-uint64
-sys_clone(void){
+uint64 sys_clone(void){
   int flags, ptid, ctid;
   uint64 stack, tls;
 
@@ -101,8 +100,7 @@ sys_wait(void)
   return wait(p);
 }
 
-uint64
-sys_wait4(void)
+uint64 sys_wait4(void)
 {
   int pid;
   uint64 p;
@@ -181,5 +179,10 @@ sys_trace(void)
     return -1;
   }
   myproc()->tmask = mask;
+  return 0;
+}
+
+uint64 sys_sched_yield(void){
+  yield();
   return 0;
 }
