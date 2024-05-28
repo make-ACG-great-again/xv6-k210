@@ -59,6 +59,11 @@ int get_abspath(struct dirent* cwd, char* path){
 }
 
 int get_path(char* path, int fd){
+  if(path == NULL){
+    printf("path == null\n");
+    return -1;
+  }
+
   if(path[0] == '/' ){
     return 0;
   }
@@ -252,7 +257,7 @@ sys_open(void)
     }
   } else {
     if((ep = ename(path)) == NULL){
-      printf("creat null: %d\n",omode);
+      printf("open null: %d\n",omode);
       return -1;
     }
     elock(ep);
@@ -315,11 +320,11 @@ uint64 sys_openat(void){
     }
   } else {
     if((ep = ename(path)) == NULL){
-      printf("creat null: %d\n", flags);
+      printf("open null: %d\n", flags);
       return -1;
     }
     elock(ep);
-    if((ep->attribute & ATTR_DIRECTORY) && (flags != O_RDONLY && flags != O_DIRECTORY)){
+    if((ep->attribute & ATTR_DIRECTORY) && (flags & O_RDONLY) && (flags & O_DIRECTORY)){
       eunlock(ep);
       eput(ep);
       printf("show O_DIRECTORY: %d \n", flags);
@@ -376,6 +381,9 @@ sys_mkdirat(void)
     printf("wrong input\n");
     return -1;
   }
+  
+  if(*path == '\0')
+    return -1;
 
   if(get_path(path, dirfd) < 0){
     printf("error in mkdirat\n");
@@ -701,4 +709,49 @@ fail:
   if (src)
     eput(src);
   return -1;
+}
+
+uint64 sys_linkat(void){
+  int olddirfd, newdirfd, flags;
+  char oldpath[FAT32_MAX_PATH];
+  char newpath[FAT32_MAX_PATH];
+
+  if(argint(0, &olddirfd) < 0 || argstr(1, oldpath, FAT32_MAX_PATH) < 0
+      || argint(2, &newdirfd) < 0 || argstr(3, newpath, FAT32_MAX_PATH) < 0
+        || argint(4, &flags) < 0)
+    return -1;
+
+  get_path(oldpath, olddirfd);
+  get_path(newpath, newdirfd);
+
+  struct dirent* oldfile;
+  struct dirent* ep;
+  if((oldfile = ename(oldpath)) == NULL){
+    printf("linkat null: %s\n",oldfile);
+    return -1;
+  }
+  elock(oldfile);
+  if(oldfile->attribute & ATTR_DIRECTORY){
+    eunlock(oldfile);
+    eput(oldfile);
+    printf("cannot linkat O_DIRECTORY\n");
+    return -1;
+  }
+  ep = create(newpath, T_FILE, oldfile->attribute);
+  if(ep == NULL){
+    printf("creat null: %d\n", oldfile->attribute);
+    return -1;
+  }
+  elock(oldfile);
+  ep->attribute = oldfile->attribute;
+  ep->first_clus = oldfile->first_clus;
+  ep->file_size = oldfile->file_size;
+  ep->cur_clus = oldfile->cur_clus;
+  ep->clus_cnt = oldfile->clus_cnt;
+  ep->dev = oldfile->dev;
+  ep->valid = oldfile->valid;
+
+  eunlock(oldfile);
+  eunlock(ep);
+  return 0;
 }

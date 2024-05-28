@@ -122,6 +122,7 @@ extern uint64 sys_pipe2(void);
 extern uint64 sys_clone(void);
 extern uint64 sys_wait4(void);
 extern uint64 sys_dup3(void);
+extern uint64 sys_linkat(void);
 
 static uint64 (*syscalls[])(void) = {
   [SYS_fork]        sys_fork,
@@ -156,6 +157,7 @@ static uint64 (*syscalls[])(void) = {
   [SYS_clone]       sys_clone,
   [SYS_wait4]       sys_wait4,
   [SYS_dup3]        sys_dup3,
+  [SYS_linkat]      sys_linkat,
 };
 
 static char *sysnames[] = {
@@ -191,6 +193,7 @@ static char *sysnames[] = {
   [SYS_clone]       "clone",
   [SYS_wait4]       "wait4",
   [SYS_dup3]        "dup3",
+  [SYS_linkat]      "linkat",
 };
 
 void
