@@ -37,7 +37,7 @@ main(void)
       exit(1);
     }
     if(pid == 0){
-      exec(tests[i], argv);
+      exec(tests[i], NULL);
       printf("init: exec %s failed\n", tests[i]);
       exit(1);
     }

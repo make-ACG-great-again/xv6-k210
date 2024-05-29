@@ -12,6 +12,7 @@
 #include "include/printf.h"
 
 extern int exec(char *path, char **argv);
+extern int execve(char *path, char **argv, char** envp);
 
 uint64
 sys_exec(void)
@@ -197,7 +198,7 @@ uint64 sys_sched_yield(void){
 }
 
 uint64 sys_execve(void){
-  char path[FAT32_MAX_PATH], *argv[MAXARG];
+  char path[FAT32_MAX_PATH], *argv[MAXARG], *envp[MAXARG];
   int i;
   uint64 uargv, uarg, uenvp;
 
@@ -224,7 +225,26 @@ uint64 sys_execve(void){
       goto bad;
   }
 
-  int ret = exec(path, argv);
+  memset(envp, 0, sizeof(envp));
+  for(i=0;; i++){
+    if(i >= NELEM(envp)){
+      goto bad;
+    }
+    if(fetchaddr(uenvp+sizeof(uint64)*i, (uint64*)&uenvp) < 0){
+      goto bad;
+    }
+    if(uenvp == 0){
+      envp[i] = 0;
+      break;
+    }
+    envp[i] = kalloc();
+    if(envp[i] == 0)
+      goto bad;
+    if(fetchstr(uenvp, envp[i], PGSIZE) < 0)
+      goto bad;
+  }
+
+  int ret = execve(path, argv, envp);
 
   for(i = 0; i < NELEM(argv) && argv[i] != 0; i++)
     kfree(argv[i]);

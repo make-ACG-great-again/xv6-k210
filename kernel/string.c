@@ -68,7 +68,8 @@ char*
 strncpy(char *s, const char *t, int n)
 {
   char *os;
-
+  if(s == NULL || t == NULL)
+    return NULL;
   os = s;
   while(n-- > 0 && (*s++ = *t++) != 0)
     ;
@@ -82,7 +83,8 @@ char*
 safestrcpy(char *s, const char *t, int n)
 {
   char *os;
-
+  if(s == NULL || t == NULL)
+    return NULL;
   os = s;
   if(n <= 0)
     return os;

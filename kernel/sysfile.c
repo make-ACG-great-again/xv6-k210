@@ -203,8 +203,10 @@ create(char *path, short type, int mode)
   struct dirent *ep, *dp;
   char name[FAT32_MAX_FILENAME + 1];
 
-  if((dp = enameparent(path, name)) == NULL)
+  if((dp = enameparent(path, name)) == NULL){
+    printf("path:%s has no dir\n", path);
     return NULL;
+  }
 
   if (type == T_DIR) {
     mode = ATTR_DIRECTORY;
@@ -787,5 +789,45 @@ uint64 sys_unlinkat(void){
   eunlock(ep);
   eput(ep);
 
+  return 0;
+}
+
+uint64 sys_mount(void){
+  char special[FAT32_MAX_PATH], dir[FAT32_MAX_PATH], fstype[FAT32_MAX_PATH];
+  uint64 flags, data;
+  //struct dirent* sp;
+  struct dirent* di;
+
+  if(argstr(0, special, FAT32_MAX_PATH) < 0 || argstr(1, dir, FAT32_MAX_PATH) < 0
+      || argstr(2, fstype, FAT32_MAX_PATH) < 0 || argaddr(3, &flags) < 0 || argaddr(4, &data))
+    return -1;
+
+  if(strncmp((char*)fstype, "vfat", 5)){
+    printf("wrong file type\n");
+    return -1;
+  }
+  
+  if((di = ename(dir)) == NULL){
+    return -1;
+  }
+
+  
+  return 0;
+}
+
+uint64 sys_umount2(void){
+  char special[FAT32_MAX_PATH];
+  uint64 flags;
+  struct dirent* sp;
+  //struct dirent* di;
+
+  if(argstr(0, special, FAT32_MAX_PATH) < 0 || argaddr(1, &flags) < 0)
+    return -1;
+  
+  if((sp = ename(special)) == NULL){
+    return -1;
+  }
+
+  
   return 0;
 }

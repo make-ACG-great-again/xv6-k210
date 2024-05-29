@@ -901,6 +901,9 @@ static struct dirent *lookup_path(char *path, int parent, char *name)
         if (!(entry->attribute & ATTR_DIRECTORY)) {
             eunlock(entry);
             eput(entry);
+            printf("for: %s, not a dir\n", path);
+            printf("name = %s\n", entry->filename);
+            printf("attr=%d\n", entry->attribute);
             return NULL;
         }
         if (parent && *path == '\0') {
@@ -918,6 +921,7 @@ static struct dirent *lookup_path(char *path, int parent, char *name)
     }
     if (parent) {
         eput(entry);
+        printf("not parents\n");
         return NULL;
     }
     return entry;

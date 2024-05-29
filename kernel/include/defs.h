@@ -38,6 +38,7 @@ void            disk_intr(void);
 
 // exec.c
 int             exec(char*, char**);
+int             execve(char*, char**, char**);
 
 // fat32.c
 int             fat32_init(void);
@@ -136,7 +137,7 @@ int             either_copyin(void *dst, int user_src, uint64 src, uint64 len);
 void            procdump(void);
 void            test_proc_init(int);
 int             clone(int flags, uint64 stack, int ptid, unit64 tls, int ctid);
-uint64             wait4(int pid, uint64 addr, int options);
+uint64          wait4(int pid, uint64 addr, int options);
 
 // swtch.S
 void            swtch(struct context*, struct context*);
