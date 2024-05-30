@@ -827,7 +827,6 @@ uint64 sys_umount2(void){
   if((sp = ename(special)) == NULL){
     return -1;
   }
-
   
   return 0;
 }

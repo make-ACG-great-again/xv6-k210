@@ -129,6 +129,7 @@ extern uint64 sys_getppid(void);
 extern uint64 sys_execve(void);
 extern uint64 sys_mount(void);
 extern uint64 sys_umount2(void);
+extern uint64 sys_uname(void);
 
 static uint64 (*syscalls[])(void) = {
   [SYS_fork]        sys_fork,
@@ -170,6 +171,7 @@ static uint64 (*syscalls[])(void) = {
   [SYS_execve]      sys_execve,
   [SYS_mount]       sys_mount,
   [SYS_umount2]     sys_umount2,
+  [SYS_uname]       sys_uname,
 };
 
 static char *sysnames[] = {
@@ -212,6 +214,7 @@ static char *sysnames[] = {
   [SYS_execve]      "execve",
   [SYS_mount]       "mount",
   [SYS_umount2]     "umount2",
+  [SYS_uname]       "uname",
 };
 
 void
@@ -260,6 +263,35 @@ sys_sysinfo(void)
   if (copyout2(addr, (char *)&info, sizeof(info)) < 0) {
     return -1;
   }
+
+  return 0;
+}
+
+uint64 sys_uname(void){
+  uint64 addr;
+
+  if (argaddr(0, &addr) < 0) {
+    return -1;
+  }
+
+  struct utsname ans = {"xv6-k210", "pku2200013135", "ver1.0", "xv6-k210-qemu", "riscv64", "local"};
+  // struct utsname* temp = &ans;
+  // char* sysname = "xv6-k210";
+  // char* nodename = "pku2200013135";
+  // char* release = "ver1.0";
+  // char* version = "xv6-k210-qemu";
+  // char* machine = "riscv64";
+  // char* domainname = "local";
+
+  // strncpy(temp->sysname, sysname, 64);
+  // strncpy(temp->nodename, nodename, 64);
+  // strncpy(temp->release, release, 64);
+  // strncpy(temp->version, version, 64);
+  // strncpy(temp->machine, machine, 64);
+  // strncpy(temp->domainname, domainname, 64);
+
+  if(copyout2(addr, (char*)&ans, sizeof(struct utsname)) < 0)
+    return -1;
 
   return 0;
 }
