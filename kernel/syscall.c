@@ -130,6 +130,8 @@ extern uint64 sys_execve(void);
 extern uint64 sys_mount(void);
 extern uint64 sys_umount2(void);
 extern uint64 sys_uname(void);
+extern uint64 sys_getdents64(void);
+extern uint64 sys_shutdown(void);
 
 static uint64 (*syscalls[])(void) = {
   [SYS_fork]        sys_fork,
@@ -172,6 +174,8 @@ static uint64 (*syscalls[])(void) = {
   [SYS_mount]       sys_mount,
   [SYS_umount2]     sys_umount2,
   [SYS_uname]       sys_uname,
+  [SYS_getdents64]  sys_getdents64,
+  [SYS_shutdown]    sys_shutdown,
 };
 
 static char *sysnames[] = {
@@ -215,6 +219,8 @@ static char *sysnames[] = {
   [SYS_mount]       "mount",
   [SYS_umount2]     "umount2",
   [SYS_uname]       "uname",
+  [SYS_getdents64]  "getdents64",
+  [SYS_shutdown]    "shutdown",
 };
 
 void
@@ -294,4 +300,9 @@ uint64 sys_uname(void){
     return -1;
 
   return 0;
+}
+
+uint64 sys_shutdown(void){
+  (*(volatile uint32 *) 0x3F00000000L) = 0x5555;
+  return -1; // never reach
 }

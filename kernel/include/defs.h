@@ -56,6 +56,7 @@ struct dirent*  ename(char *path);
 struct dirent*  enameparent(char *path, char *name);
 int             eread(struct dirent *entry, int user_dst, uint64 dst, uint off, uint n);
 int             ewrite(struct dirent *entry, int user_src, uint64 src, uint off, uint n);
+uint64          getdents64(struct dirent* parent, uint64 buf, int len);
 
 // file.c
 struct file*    filealloc(void);

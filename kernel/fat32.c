@@ -9,6 +9,7 @@
 #include "include/fat32.h"
 #include "include/string.h"
 #include "include/printf.h"
+#include "include/vm.h"
 
 /* fields that start with "_" are something we don't use */
 
@@ -936,4 +937,41 @@ struct dirent *ename(char *path)
 struct dirent *enameparent(char *path, char *name)
 {
     return lookup_path(path, 1, name);
+}
+
+uint64 getdents64(struct dirent* parent, uint64 buf, int len){
+    int num = 0;
+    int lock = 0;
+    int dirlen = sizeof(struct dirall);
+    struct dirall label;
+    struct dirent* ep;
+    label.off = dirlen;
+    label.reclen = dirlen;
+
+    acquire(&ecache.lock);
+    for (ep = root.next; ep != &root; ep = ep->next) {          // LRU algo
+        if (ep->valid == 1 && ep->parent == parent) {
+        label.inode = num++;
+        if(ep->ref > 0){
+            elock(ep);
+            lock = 1;
+        }
+        label.type = ep->attribute;
+        strncpy(label.name, ep->filename, FAT32_MAX_FILENAME);
+        if(lock){
+            eunlock(ep);
+            lock = 0;
+        }
+        if(copyout2(buf, (char*)&label, dirlen) < 0){
+            release(&ecache.lock);
+            return -1;
+        }
+        if(len < num * dirlen){
+            release(&ecache.lock);
+            return num*dirlen;
+        }
+        }
+    }
+    release(&ecache.lock);
+    return 0;
 }

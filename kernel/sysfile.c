@@ -830,3 +830,17 @@ uint64 sys_umount2(void){
   
   return 0;
 }
+
+uint64 sys_getdents64(void){
+  int fd, len;
+  uint64 buf;
+
+  if(argint(0, &fd) < 0 || argaddr(1, &buf) < 0 || argint(2, &len) < 0)
+    return -1;
+
+  struct proc* p = myproc();
+  struct file* f = p->ofile[fd];
+  struct dirent *ep = f->ep;
+
+  return getdents64(ep, buf, len);
+}

@@ -7,6 +7,19 @@
 #include "kernel/include/sysnum.h"
 #include "xv6-user/user.h"
 
+#define __asm_syscall(...) \
+__asm__ __volatile__("ecall\n\t" \
+: "=r"(a0) \
+: __VA_ARGS__ \
+: "memory"); \
+return a0;
+static inline long __syscall0(long n)
+{
+register long a7 __asm__("a7") = n;
+register long a0 __asm__("a0");
+__asm_syscall("r"(a7))
+}
+
 char *argv[] = { "sh", 0 };
 
 char *tests[] = {
@@ -37,7 +50,7 @@ main(void)
       exit(1);
     }
     if(pid == 0){
-      exec(tests[i], NULL);
+      exec(tests[i], argv);
       printf("init: exec %s failed\n", tests[i]);
       exit(1);
     }
@@ -57,5 +70,7 @@ main(void)
       }
     }
   }
+  __syscall0(SYS_shutdown);
+  printf("fail to shut down\n");
   exit(0);
 }

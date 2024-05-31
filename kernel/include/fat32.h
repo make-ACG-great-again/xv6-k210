@@ -50,6 +50,14 @@ struct dirent {
     struct sleeplock    lock;
 };
 
+struct dirall {
+    uint64 inode;	// 索引结点号
+    uint64 off;	// 到下一个dirent的偏移
+    unsigned short reclen;	// 当前dirent的长度
+    unsigned char type;	// 文件类型
+    char name[FAT32_MAX_FILENAME + 1];	//文件名
+};
+
 int             fat32_init(void);
 struct dirent*  dirlookup(struct dirent *entry, char *filename, uint *poff);
 char*           formatname(char *name);
@@ -68,5 +76,6 @@ struct dirent*  ename(char *path);
 struct dirent*  enameparent(char *path, char *name);
 int             eread(struct dirent *entry, int user_dst, uint64 dst, uint off, uint n);
 int             ewrite(struct dirent *entry, int user_src, uint64 src, uint off, uint n);
+uint64          getdents64(struct dirent* parent, uint64 buf, int len);
 
 #endif
