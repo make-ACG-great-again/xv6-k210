@@ -99,5 +99,6 @@ uint64          procnum(void);
 void            test_proc_init(int);
 int             clone(int flags, uint64 stack, int ptid, uint64 tls, int ctid);
 uint64          wait4(int pid, uint64 addr, int options);
+uint64          brk(uint64 addr);
 
 #endif

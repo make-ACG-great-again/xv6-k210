@@ -256,3 +256,10 @@ uint64 sys_execve(void){
     kfree(argv[i]);
   return -1;
 }
+
+uint64 sys_brk(void){
+  uint64 addr;
+  if(argaddr(0, &addr) < 0)
+    return -1;
+  return brk(addr);
+}

@@ -525,6 +525,24 @@ growproc(int n)
   return 0;
 }
 
+uint64 brk(uint64 addr){
+  uint sz;
+  struct proc *p = myproc();
+
+  sz = p->sz;
+  if(addr == 0)
+    return sz;
+  if(addr > sz){
+    if((sz = uvmalloc(p->pagetable, p->kpagetable, sz, addr)) == 0) {
+      return -1;
+    }
+  } else if(addr < sz){
+    sz = uvmdealloc(p->pagetable, p->kpagetable, sz, addr);
+  }
+  p->sz = sz;
+  return 0;
+}
+
 // Create a new process, copying the parent.
 // Sets up child kernel stack to return as if from fork() system call.
 int
@@ -1163,4 +1181,3 @@ procnum(void)
 
   return num;
 }
-
