@@ -133,6 +133,8 @@ extern uint64 sys_uname(void);
 extern uint64 sys_getdents64(void);
 extern uint64 sys_shutdown(void);
 extern uint64 sys_brk(void);
+extern uint64 sys_munmap(void);
+extern uint64 sys_mmap(void);
 
 static uint64 (*syscalls[])(void) = {
   [SYS_fork]        sys_fork,
@@ -178,6 +180,8 @@ static uint64 (*syscalls[])(void) = {
   [SYS_getdents64]  sys_getdents64,
   [SYS_shutdown]    sys_shutdown,
   [SYS_brk]         sys_brk,
+  [SYS_munmap]      sys_munmap,
+  [SYS_mmap]        sys_mmap,
 };
 
 static char *sysnames[] = {
@@ -224,6 +228,8 @@ static char *sysnames[] = {
   [SYS_getdents64]  "getdents64",
   [SYS_shutdown]    "shutdown",
   [SYS_brk]         "brk",
+  [SYS_munmap]      "munmap",
+  [SYS_mmap]        "mmap",
 };
 
 void

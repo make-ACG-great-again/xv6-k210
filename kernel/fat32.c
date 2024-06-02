@@ -264,6 +264,7 @@ static uint rw_clus(uint32 cluster, int write, int user, uint64 data, uint off, 
         }
         brelse(bp);
         if (bad == -1) {
+            printf("bad\n");
             break;
         }
     }
@@ -314,6 +315,7 @@ static int reloc_clus(struct dirent *entry, uint off, int alloc)
 int eread(struct dirent *entry, int user_dst, uint64 dst, uint off, uint n)
 {
     if (off > entry->file_size || off + n < off || (entry->attribute & ATTR_DIRECTORY)) {
+        printf("eread len = 0\n");
         return 0;
     }
     if (off + n > entry->file_size) {
