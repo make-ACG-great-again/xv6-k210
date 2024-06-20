@@ -70,6 +70,7 @@ struct proc {
   int tmask;                   // trace mask
   int stopped;                 // ever stops but does not inform parent
   int continued;               // ever recover from stopped but does not inform parent
+  int n_tick;
 };
 
 void            reg_info(void);

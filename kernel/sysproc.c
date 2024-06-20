@@ -328,3 +328,16 @@ uint64 sys_gettimeofday(void){
   *((uint64*)addr + 1) = usec;
   return 0;
 }
+
+uint64 sys_times(void){
+  uint64 addr;
+  if(argaddr(0, &addr) < 0)
+    return -1;
+  struct proc *p = myproc();
+  uint64 tick = p->n_tick;
+  *(uint64*)addr = tick;
+  *((uint64*)addr + 1) = tick;
+  *((uint64*)addr + 2) = 0;
+  *((uint64*)addr + 3) = 0;
+  return tick;
+}

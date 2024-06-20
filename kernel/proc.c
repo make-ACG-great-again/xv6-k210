@@ -163,7 +163,7 @@ found:
   memset(&p->context, 0, sizeof(p->context));
   p->context.ra = (uint64)forkret;
   p->context.sp = p->kstack + PGSIZE;
-
+  p->n_tick = 0;
   return p;
 }
 
@@ -940,7 +940,7 @@ scheduler(void)
         // Process is done running for now.
         // It should have changed its p->state before coming back.
         c->proc = 0;
-
+        p->n_tick++;
         found = 1;
       }
       release(&p->lock);
