@@ -159,6 +159,27 @@ sys_sleep(void)
   return 0;
 }
 
+uint64 sys_nanosleep(void){
+  uint64 addr;
+  if(argaddr(0, &addr) < 0)
+    return -1;
+  uint64 sec = *(uint64*)addr;
+  uint64 usec = *((uint64*)addr + 1);
+  uint64 n = (sec * 200 + usec / 5000000);
+  uint64 ticks0;
+  acquire(&tickslock);
+  ticks0 = ticks;
+  while(ticks - ticks0 < n){
+    if(myproc()->killed){
+      release(&tickslock);
+      return -1;
+    }
+    sleep(&ticks, &tickslock);
+  }
+  release(&tickslock);
+  return 0;
+}
+
 uint64
 sys_kill(void)
 {
@@ -322,8 +343,8 @@ uint64 sys_gettimeofday(void){
     return -1;
   if((time = r_time()) < 0)
     return -1;
-  uint64 sec = time / 390000000;
-  uint64 usec = (time / 390) % 1000000;
+  uint64 sec = time / 10000000;
+  uint64 usec = (time / 10) % 1000000;
   *(uint64*)addr = sec;
   *((uint64*)addr + 1) = usec;
   return 0;
