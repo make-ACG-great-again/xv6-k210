@@ -82,10 +82,10 @@
 #define SYS_brk         214
 #define SYS_munmap      215
 #define SYS_mmap        222
-
-// undefined
 #define SYS_times       153
 #define SYS_gettimeofday 169
 #define SYS_nanosleep   101
+
+// undefined
 
 #endif

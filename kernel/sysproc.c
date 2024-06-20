@@ -165,7 +165,7 @@ uint64 sys_nanosleep(void){
     return -1;
   uint64 sec = *(uint64*)addr;
   uint64 usec = *((uint64*)addr + 1);
-  uint64 n = (sec * 200 + usec / 5000000);
+  uint64 n = (sec * 20 + usec / 50000000);
   uint64 ticks0;
   acquire(&tickslock);
   ticks0 = ticks;
@@ -356,8 +356,8 @@ uint64 sys_times(void){
     return -1;
   struct proc *p = myproc();
   uint64 tick = p->n_tick;
-  *(uint64*)addr = tick;
-  *((uint64*)addr + 1) = tick;
+  *(uint64*)addr = tick * 50;
+  *((uint64*)addr + 1) = tick * 50;
   *((uint64*)addr + 2) = 0;
   *((uint64*)addr + 3) = 0;
   return tick;
