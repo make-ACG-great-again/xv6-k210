@@ -135,6 +135,7 @@ extern uint64 sys_shutdown(void);
 extern uint64 sys_brk(void);
 extern uint64 sys_munmap(void);
 extern uint64 sys_mmap(void);
+extern uint64 sys_gettimeofday(void);
 
 static uint64 (*syscalls[])(void) = {
   [SYS_fork]        sys_fork,
@@ -182,6 +183,7 @@ static uint64 (*syscalls[])(void) = {
   [SYS_brk]         sys_brk,
   [SYS_munmap]      sys_munmap,
   [SYS_mmap]        sys_mmap,
+  [SYS_gettimeofday]sys_gettimeofday,
 };
 
 static char *sysnames[] = {
@@ -230,6 +232,7 @@ static char *sysnames[] = {
   [SYS_brk]         "brk",
   [SYS_munmap]      "munmap",
   [SYS_mmap]        "mmap",
+  [SYS_gettimeofday]"gettimeofday",
 };
 
 void

@@ -79,11 +79,11 @@
 #define SYS_uname       160
 #define SYS_getdents64  61
 #define SYS_shutdown    210
-
-// undefined
 #define SYS_brk         214
 #define SYS_munmap      215
 #define SYS_mmap        222
+
+// undefined
 #define SYS_times       153
 #define SYS_gettimeofday 169
 #define SYS_nanosleep   101

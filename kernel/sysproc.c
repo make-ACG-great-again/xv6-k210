@@ -314,3 +314,17 @@ uint64 sys_mmap(void){
   eunlock(f->ep);
   return addr;
 }
+
+uint64 sys_gettimeofday(void){
+  uint64 time;
+  uint64 addr;
+  if(argaddr(0, &addr) < 0)
+    return -1;
+  if((time = r_time()) < 0)
+    return -1;
+  uint64 sec = time / 390000000;
+  uint64 usec = (time / 390) % 1000000;
+  *(uint64*)addr = sec;
+  *((uint64*)addr + 1) = usec;
+  return 0;
+}
