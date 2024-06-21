@@ -32,9 +32,9 @@
 
 // updated
 #define SYS_getcwd      17
+#define SYS_fstat       80
 
 //dealing
-#define SYS_fstat       80
 
 // exist
 #define SYS_fork         1
