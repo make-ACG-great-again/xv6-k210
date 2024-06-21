@@ -23,18 +23,18 @@ struct devsw {
 };
 
 struct kstat {
-	int st_dev;
-	int st_ino;
+	uint64 st_dev;
+	uint64 st_ino;
 	int st_mode;
-	int st_nlink;
-	int st_uid;
-	int st_gid;
-	int st_rdev;
+	uint32 st_nlink;
+	uint32 st_uid;
+	uint32 st_gid;
+	uint64 st_rdev;
 	unsigned long __pad;
-	int st_size;
-	int st_blksize;
+	uint64 st_size;
+	uint32 st_blksize;
 	int __pad2;
-	int st_blocks;
+	uint64 st_blocks;
 	long st_atime_sec;
 	long st_atime_nsec;
 	long st_mtime_sec;
