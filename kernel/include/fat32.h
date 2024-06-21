@@ -48,6 +48,9 @@ struct dirent {
     struct dirent *next;
     struct dirent *prev;
     struct sleeplock    lock;
+    uint64 atime;
+    uint64 mtime;
+    uint64 ctime;
 };
 
 struct dirall {

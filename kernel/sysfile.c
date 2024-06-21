@@ -157,6 +157,7 @@ sys_read(void)
 
   if(argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argaddr(1, &p) < 0)
     return -1;
+  f->ep->atime = r_time();
   return fileread(f, p, n);
 }
 
@@ -170,6 +171,7 @@ sys_write(void)
   if(argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argaddr(1, &p) < 0){
     return -1;
   }
+  f->ep->mtime = r_time();
   return filewrite(f, p, n);
 }
 
@@ -233,7 +235,7 @@ create(char *path, short type, int mode)
 
   eunlock(dp);
   eput(dp);
-
+  ep->ctime = r_time();
   elock(ep);
   return ep;
 }
@@ -370,6 +372,7 @@ sys_mkdir(void)
   }
   eunlock(ep);
   eput(ep);
+  ep->ctime = r_time();
   return 0;
 }
 
@@ -859,9 +862,9 @@ uint64 sys_fstat(void){
   st->st_mode = (ep->attribute & ATTR_DIRECTORY) ? T_DIR : T_FILE;
   st->st_nlink = f->ref;
   st->st_size = ep->file_size;
-  st->st_atime_sec = 0;
-  st->st_mtime_sec = 0;
-  st->st_ctime_sec = 0;
+  st->st_atime_sec = ep->atime / 10000000;
+  st->st_mtime_sec = ep->mtime / 10000000;
+  st->st_ctime_sec = ep->ctime / 10000000;
   *(struct kstat*)addr = *st;
   return 0;
 }
