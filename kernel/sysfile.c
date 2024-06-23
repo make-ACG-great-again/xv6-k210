@@ -324,14 +324,15 @@ uint64 sys_openat(void){
     }
   } else {
     if((ep = ename(path)) == NULL){
-      //printf("open null: %d\n", flags);
+      printf("open null: %d\n", flags);
       return -1;
     }
     elock(ep);
-    if((ep->attribute & ATTR_DIRECTORY) && !(flags & O_RDONLY) && !(flags & O_DIRECTORY)){
+    if((ep->attribute & ATTR_DIRECTORY) && (flags & O_RDONLY) && (flags & O_DIRECTORY)){
       eunlock(ep);
       eput(ep);
       printf("show O_DIRECTORY: %d \n", flags);
+      printf("abs_path=%s\n",path);
       return -1;
     }
   }
