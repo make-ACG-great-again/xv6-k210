@@ -43,8 +43,8 @@ argfd(int n, int *pfd, struct file **pf)
 }
 
 int get_abspath(struct dirent* cwd, char* path){
-  strncpy(path, cwd->filename, FAT32_MAX_FILENAME + 1);
   if(path == NULL) return -1;
+  strncpy(path, cwd->filename, FAT32_MAX_FILENAME + 1);
   char temp[FAT32_MAX_FILENAME];
   while(cwd->parent != NULL){
     cwd = cwd->parent;
@@ -328,7 +328,7 @@ uint64 sys_openat(void){
       return -1;
     }
     elock(ep);
-    if((ep->attribute & ATTR_DIRECTORY) && (flags & O_RDONLY) && (flags & O_DIRECTORY)){
+    if((ep->attribute & ATTR_DIRECTORY) && !(flags & O_RDONLY) && !(flags & O_DIRECTORY)){
       eunlock(ep);
       eput(ep);
       printf("show O_DIRECTORY: %d \n", flags);
@@ -549,6 +549,12 @@ sys_getcwd(void)
   // uint64 addr;
   // if (argaddr(0, &addr) < 0)
   //   return -1;
+
+  struct proc* p = myproc();
+  if(buf == 0){
+    buf = p->sz;
+    p->sz = uvmalloc(p->pagetable, p->kpagetable, p->sz, p->sz + size);
+  }
 
   struct dirent *de = myproc()->cwd;
   char path[FAT32_MAX_PATH];
@@ -813,7 +819,6 @@ uint64 sys_mount(void){
   if((di = ename(dir)) == NULL){
     return -1;
   }
-
   
   return 0;
 }

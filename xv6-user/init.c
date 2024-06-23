@@ -71,6 +71,6 @@ main(void)
     }
   }
   __syscall0(SYS_shutdown);
-  printf("fail to shut down\n");
+  printf("fail to shut down\n");// never reach
   exit(0);
 }
